@@ -18,4 +18,12 @@ class TimeRange(str, Enum):
     month = "month"
 
 
-sqlite_engine_uri = "sqlite:///db.sqlite"
+class GuitarFocus(Enum):
+    COURSE = "course"
+    SCALE = "scale"
+    SONG = "song"
+    WRITING = "writing"
+    THEORY = "theory"
+
+
+sqlite_engine_uri = "sqlite:///forgelog.sqlite"

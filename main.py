@@ -21,8 +21,10 @@ You can wire in DB + LLM logic step by step.
 from typing import Optional
 import typer
 from sqlalchemy.orm import Session
+import time
 
 from config import TimeRange
+import config
 import db
 from model import Base
 from services import events
@@ -82,7 +84,6 @@ def log_workout(
     """
     Log a workout (run, PT, etc.).
     """
-    # TODO: call a service layer function to create Event + EventMetric rows.
     with Session(db.get_engine()) as session:
         event = events.log_workout(
             session,
@@ -130,11 +131,17 @@ def log_study(
 
 @log_app.command("guitar")
 def log_guitar(
-    minutes: float = typer.Option(
-        ..., "--minutes", "-m", help="Practice duration in minutes"
+    record_session: bool = typer.Option(
+        False,
+        "--session",
+        "-s",
+        help="Start a practice session. Records the number of minutes practicing until a key is pressed.",
     ),
-    focus: Optional[str] = typer.Option(
-        None, "--focus", "-f", help="Focus area (scales, chords, songs)"
+    minutes: Optional[float] = typer.Option(
+        None, "--minutes", "-m", help="Practice duration in minutes"
+    ),
+    focus: Optional[config.GuitarFocus] = typer.Option(
+        None, "--focus", "-f", help="Focus area: course, scale, song, theory, writing"
     ),
     notes: Optional[str] = typer.Option(
         None, "--notes", "-n", help="Extra notes about practice"
@@ -143,6 +150,29 @@ def log_guitar(
     """
     Log a guitar practice session.
     """
+    if record_session:
+        typer.echo("🎸 Starting practice session…")
+        typer.echo("Press ENTER to end the session.")
+        start = time.time()
+        input()  # wait for user
+        end = time.time()
+        minutes = round((end - start) / 60, 2)
+        add_note = typer.prompt("Yould you like to add a note? (Y/N)")
+        if add_note.lower() == "y":
+            notes = typer.prompt("Note")
+            typer.echo(f"Notes: {notes}")
+        typer.echo(f"⏱ Session length: {minutes} minutes")
+
+    # If user didn't use --session and didn't supply minutes → error
+    if minutes is None:
+        raise typer.BadParameter("You must provide --minutes or use --session.")
+    if focus and focus in config.GuitarFocus:
+        with Session(db.get_engine()) as session:
+            event = events.log_guitar(
+                session=session, name=focus, value=minutes, notes=notes
+            )
+        typer.echo(f"Logged Guitar Event:\n{event.title} with id {event.id}")
+
     typer.echo("Logging guitar practice:")
     typer.echo(f"  minutes={minutes}")
     typer.echo(f"  focus={focus}")

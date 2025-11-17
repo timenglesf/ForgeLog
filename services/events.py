@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from config import EventTypes
+from config import EventTypes, GuitarFocus
 from model import Event, EventMetric
 
 
@@ -45,3 +45,25 @@ def log_workout(
 
 def append_workout_metric(event: Event, name: str, value: int, unit: str):
     event.metrics.append(EventMetric(name=name, value=value, unit=unit))
+
+
+def log_guitar(
+    session: Session, name: GuitarFocus, value: float | None, notes: str | None
+) -> Event:
+    title = f"guitar {datetime.now().strftime('%d-%m-%Y')}"
+    event = Event(
+        type=EventTypes.GUITAR,
+        title=title,
+        raw_text=None,
+        notes=notes,
+    )
+    session.add(event)
+    session.flush()
+
+    event.metrics.append(
+        EventMetric(name=f"guitar_{name.value}", value=value, unit="min")
+    )
+
+    session.commit()
+    session.refresh(event)
+    return event
