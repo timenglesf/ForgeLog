@@ -18,7 +18,7 @@ For now, everything is just stubbed out with Typer.
 You can wire in DB + LLM logic step by step.
 """
 
-from typing import Optional
+from typing import Annotated, Optional
 import typer
 from sqlalchemy.orm import Session
 import time
@@ -35,7 +35,7 @@ app = typer.Typer(help="Local AI life tracker (workout, study, guitar, journalin
 
 # Sub-apps
 log_app = typer.Typer(
-    help="Log events: workouts, study sessions, guitar practice, notes."
+    help="Log events: workouts, study sessions, guitar practice, notes, general activity."
 )
 analyze_app = typer.Typer(help="Analyze your data over different time ranges.")
 blog_app = typer.Typer(help="Generate markdown blog posts from your logs.")
@@ -53,33 +53,80 @@ app.add_typer(goals_app, name="goals")
 # log subcommands
 # --------------------
 
+# -------------
+### WORKOUT ###
+# -------------
+
 
 @log_app.command("workout")
 def log_workout(
-    distance_km: Optional[float] = typer.Option(
-        None, "--distance-km", "-d", help="Distance in kilometers."
-    ),
-    duration_min: Optional[float] = typer.Option(
-        None, "--duration-min", "-t", help="Duration in minutes."
-    ),
-    dips: Optional[int] = typer.Option(
-        None, "--dips", help="Number of dips(optional)."
-    ),
-    pushups: Optional[int] = typer.Option(
-        None, "--pushups", help="Number of pushups (optional)."
-    ),
-    pullups: Optional[int] = typer.Option(
-        None, "--pullups", help="Number of pullups (optional)."
-    ),
-    rows: Optional[int] = typer.Option(
-        None, "--rows", help="Number of rows (optional)."
-    ),
-    squats: Optional[int] = typer.Option(
-        None, "--squats", help="Number of squats (optional)."
-    ),
-    notes: Optional[str] = typer.Option(
-        None, "--notes", "-n", help="Optional notes about the workout."
-    ),
+    distance_km: Annotated[
+        Optional[float],
+        typer.Option(
+            None,
+            "--distance-km",
+            "-d",
+            help="Distance in kilometers.",
+        ),
+    ] = None,
+    duration_min: Annotated[
+        Optional[float],
+        typer.Option(
+            None,
+            "--duration-min",
+            "-t",
+            help="Duration in minutes.",
+        ),
+    ] = None,
+    dips: Annotated[
+        Optional[int],
+        typer.Option(
+            None,
+            "--dips",
+            help="Number of dips (optional).",
+        ),
+    ] = None,
+    pushups: Annotated[
+        Optional[int],
+        typer.Option(
+            None,
+            "--pushups",
+            help="Number of pushups (optional).",
+        ),
+    ] = None,
+    pullups: Annotated[
+        Optional[int],
+        typer.Option(
+            None,
+            "--pullups",
+            help="Number of pullups (optional).",
+        ),
+    ] = None,
+    rows: Annotated[
+        Optional[int],
+        typer.Option(
+            None,
+            "--rows",
+            help="Number of rows (optional).",
+        ),
+    ] = None,
+    squats: Annotated[
+        Optional[int],
+        typer.Option(
+            None,
+            "--squats",
+            help="Number of squats (optional).",
+        ),
+    ] = None,
+    notes: Annotated[
+        Optional[str],
+        typer.Option(
+            None,
+            "--notes",
+            "-n",
+            help="Optional notes about the workout.",
+        ),
+    ] = None,
 ):
     """
     Log a workout (run, PT, etc.).
@@ -108,44 +155,52 @@ def log_workout(
     typer.echo(f"  notes={notes}")
 
 
-@log_app.command("study")
-def log_study(
-    minutes: float = typer.Option(
-        ..., "--minutes", "-m", help="Study duration in minutes."
-    ),
-    topic: Optional[str] = typer.Option(
-        None, "--topic", "-t", help="Topic or subject studied."
-    ),
-    notes: Optional[str] = typer.Option(
-        None, "--notes", "-n", help="Extra notes about the study session."
-    ),
-):
-    """
-    Log a study session.
-    """
-    typer.echo("Logging study session:")
-    typer.echo(f"  minutes={minutes}")
-    typer.echo(f"  topic={topic}")
-    typer.echo(f"  notes={notes}")
+# -------------
+### GUITAR ###
+# -------------
 
 
 @log_app.command("guitar")
 def log_guitar(
-    record_session: bool = typer.Option(
-        False,
-        "--session",
-        "-s",
-        help="Start a practice session. Records the number of minutes practicing until a key is pressed.",
-    ),
-    minutes: Optional[float] = typer.Option(
-        None, "--minutes", "-m", help="Practice duration in minutes"
-    ),
-    focus: Optional[config.GuitarFocus] = typer.Option(
-        None, "--focus", "-f", help="Focus area: course, scale, song, theory, writing"
-    ),
-    notes: Optional[str] = typer.Option(
-        None, "--notes", "-n", help="Extra notes about practice"
-    ),
+    record_session: Annotated[
+        bool,
+        typer.Option(
+            False,
+            "--session",
+            "-s",
+            help=(
+                "Start a practice session. Records the number of minutes "
+                "practicing until a key is pressed."
+            ),
+        ),
+    ] = False,
+    minutes: Annotated[
+        Optional[float],
+        typer.Option(
+            None,
+            "--minutes",
+            "-m",
+            help="Practice duration in minutes.",
+        ),
+    ] = None,
+    focus: Annotated[
+        Optional[config.GuitarFocus],
+        typer.Option(
+            None,
+            "--focus",
+            "-f",
+            help="Focus area: course, scale, song, theory, writing.",
+        ),
+    ] = None,
+    notes: Annotated[
+        Optional[str],
+        typer.Option(
+            None,
+            "--notes",
+            "-n",
+            help="Extra notes about practice.",
+        ),
+    ] = None,
 ):
     """
     Log a guitar practice session.
@@ -157,11 +212,12 @@ def log_guitar(
         input()  # wait for user
         end = time.time()
         minutes = round((end - start) / 60, 2)
-        add_note = typer.prompt("Yould you like to add a note? (Y/N)")
+        add_note = ""
+        while add_note.lower() not in ("y", "n"):
+            add_note = typer.prompt("Yould you like to add a note? (Y/N)")
+            typer.echo(f"⏱ Session length: {minutes} minutes")
         if add_note.lower() == "y":
             notes = typer.prompt("Note")
-            typer.echo(f"Notes: {notes}")
-        typer.echo(f"⏱ Session length: {minutes} minutes")
 
     # If user didn't use --session and didn't supply minutes → error
     if minutes is None:
@@ -176,6 +232,110 @@ def log_guitar(
     typer.echo("Logging guitar practice:")
     typer.echo(f"  minutes={minutes}")
     typer.echo(f"  focus={focus}")
+    typer.echo(f"  notes={notes}")
+
+
+# ------------
+### STUDY ###
+# ------------
+
+
+@log_app.command("study")
+def log_study(
+    minutes: Annotated[
+        float,
+        typer.Option(
+            ...,
+            "--minutes",
+            "-m",
+            help="Study duration in minutes.",
+        ),
+    ],
+    topic: Annotated[
+        Optional[str],
+        typer.Option(
+            None,
+            "--topic",
+            "-t",
+            help="Topic or subject studied.",
+        ),
+    ] = None,
+    notes: Annotated[
+        Optional[str],
+        typer.Option(
+            None,
+            "--notes",
+            "-n",
+            help="Extra notes about the study session.",
+        ),
+    ] = None,
+):
+    """
+    Log a study session.
+    """
+    typer.echo("Logging study session:")
+    typer.echo(f"  minutes={minutes}")
+    typer.echo(f"  topic={topic}")
+    typer.echo(f"  notes={notes}")
+
+
+# --------------
+### ACTICITY ###
+# --------------
+
+
+@log_app.command("activity")
+def log_activity(
+    name: Annotated[
+        str,
+        typer.Argument(help="Name of the activity. Example: gaming."),
+    ],
+    record_activity: Annotated[
+        bool,
+        typer.Option(
+            "--session",
+            "-s",
+            help="Start an activity session. Records minutes until ENTER is pressed.",
+            is_flag=True,
+        ),
+    ] = False,
+    minutes: Annotated[
+        Optional[float],
+        typer.Option(None, "--minutes", "-m", help="Activity duration in minutes"),
+    ] = None,
+    notes: Annotated[
+        Optional[str],
+        typer.Option(None, "--notes", "-n", help="Extra notes about the activity"),
+    ] = None,
+):
+    if record_activity:
+        typer.echo("Starting activity…")
+        typer.echo("Press ENTER to end the session.")
+        start = time.time()
+        input()  # wait for user
+        end = time.time()
+        minutes = round((end - start) / 60, 2)
+        add_note = ""
+        while add_note.lower() not in ("y", "n"):
+            add_note = typer.prompt("Yould you like to add a note? (Y/N)")
+            typer.echo(f"⏱ Activity length: {minutes} minutes")
+        if add_note.lower() == "y":
+            notes = typer.prompt("Note")
+
+    # If user didn't use --session and didn't supply minutes → error
+    if minutes is None:
+        raise typer.BadParameter("You must provide --minutes or use --session.")
+    # if name:
+    #     with Session(db.get_engine()) as session:
+    #         TODO: Create a function to log general activities
+    #         event = events.log_guitar(
+    #             session=session, name=name, value=minutes, notes=notes
+    #         )
+    #     typer.echo(f"Logged Guitar Event:\n{event.title} with id {event.id}")
+
+    typer.echo("Logging activity practice:")
+    typer.echo(f"  focus={name}")
+    typer.echo(f"  minutes={minutes}")
     typer.echo(f"  notes={notes}")
 
 
