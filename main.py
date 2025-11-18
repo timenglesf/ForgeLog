@@ -63,7 +63,6 @@ def log_workout(
     distance_km: Annotated[
         Optional[float],
         typer.Option(
-            None,
             "--distance-km",
             "-d",
             help="Distance in kilometers.",
@@ -72,7 +71,6 @@ def log_workout(
     duration_min: Annotated[
         Optional[float],
         typer.Option(
-            None,
             "--duration-min",
             "-t",
             help="Duration in minutes.",
@@ -81,7 +79,6 @@ def log_workout(
     dips: Annotated[
         Optional[int],
         typer.Option(
-            None,
             "--dips",
             help="Number of dips (optional).",
         ),
@@ -89,7 +86,6 @@ def log_workout(
     pushups: Annotated[
         Optional[int],
         typer.Option(
-            None,
             "--pushups",
             help="Number of pushups (optional).",
         ),
@@ -97,7 +93,6 @@ def log_workout(
     pullups: Annotated[
         Optional[int],
         typer.Option(
-            None,
             "--pullups",
             help="Number of pullups (optional).",
         ),
@@ -105,7 +100,6 @@ def log_workout(
     rows: Annotated[
         Optional[int],
         typer.Option(
-            None,
             "--rows",
             help="Number of rows (optional).",
         ),
@@ -113,7 +107,6 @@ def log_workout(
     squats: Annotated[
         Optional[int],
         typer.Option(
-            None,
             "--squats",
             help="Number of squats (optional).",
         ),
@@ -121,7 +114,6 @@ def log_workout(
     notes: Annotated[
         Optional[str],
         typer.Option(
-            None,
             "--notes",
             "-n",
             help="Optional notes about the workout.",
@@ -165,7 +157,6 @@ def log_guitar(
     record_session: Annotated[
         bool,
         typer.Option(
-            False,
             "--session",
             "-s",
             help=(
@@ -177,7 +168,6 @@ def log_guitar(
     minutes: Annotated[
         Optional[float],
         typer.Option(
-            None,
             "--minutes",
             "-m",
             help="Practice duration in minutes.",
@@ -186,7 +176,6 @@ def log_guitar(
     focus: Annotated[
         Optional[config.GuitarFocus],
         typer.Option(
-            None,
             "--focus",
             "-f",
             help="Focus area: course, scale, song, theory, writing.",
@@ -195,7 +184,6 @@ def log_guitar(
     notes: Annotated[
         Optional[str],
         typer.Option(
-            None,
             "--notes",
             "-n",
             help="Extra notes about practice.",
@@ -254,7 +242,6 @@ def log_study(
     topic: Annotated[
         Optional[str],
         typer.Option(
-            None,
             "--topic",
             "-t",
             help="Topic or subject studied.",
@@ -263,7 +250,6 @@ def log_study(
     notes: Annotated[
         Optional[str],
         typer.Option(
-            None,
             "--notes",
             "-n",
             help="Extra notes about the study session.",
@@ -301,13 +287,16 @@ def log_activity(
     ] = False,
     minutes: Annotated[
         Optional[float],
-        typer.Option(None, "--minutes", "-m", help="Activity duration in minutes"),
+        typer.Option("--minutes", "-m", help="Activity duration in minutes"),
     ] = None,
     notes: Annotated[
         Optional[str],
-        typer.Option(None, "--notes", "-n", help="Extra notes about the activity"),
+        typer.Option("--notes", "-n", help="Extra notes about the activity"),
     ] = None,
 ):
+    """
+    Log an activity that isn't covered by other subcommands.
+    """
     if record_activity:
         typer.echo("Starting activity…")
         typer.echo("Press ENTER to end the session.")
@@ -325,13 +314,12 @@ def log_activity(
     # If user didn't use --session and didn't supply minutes → error
     if minutes is None:
         raise typer.BadParameter("You must provide --minutes or use --session.")
-    # if name:
-    #     with Session(db.get_engine()) as session:
-    #         TODO: Create a function to log general activities
-    #         event = events.log_guitar(
-    #             session=session, name=name, value=minutes, notes=notes
-    #         )
-    #     typer.echo(f"Logged Guitar Event:\n{event.title} with id {event.id}")
+    if name:
+        with Session(db.get_engine()) as session:
+            event = events.log_activity(
+                session=session, name=name, value=minutes, notes=notes
+            )
+        typer.echo(f"Logged Guitar Event:\n{event.title} with id {event.id}")
 
     typer.echo("Logging activity practice:")
     typer.echo(f"  focus={name}")
@@ -346,11 +334,13 @@ def log_activity(
 
 @app.command("today")
 def show_today(
-    detailed: bool = typer.Option(
-        False,
-        "detailed" "-d",
-        help="Show full details/notes for each event.",
-    )
+    detailed: Annotated[
+        bool,
+        typer.Option(
+            "detailed" "-d",
+            help="Show full details/notes for each event.",
+        ),
+    ] = False,
 ):
     """
     Show all events logged today.
@@ -388,7 +378,6 @@ def blog_generate(
         TimeRange.week, help="Time range for the blog post."
     ),
     output: Optional[str] = typer.Option(
-        None,
         "--output",
         "-o",
         help="Optional path to write markdown output to a file.",

@@ -67,3 +67,26 @@ def log_guitar(
     session.commit()
     session.refresh(event)
     return event
+
+
+def log_activity(
+    session: Session,
+    name: str,
+    value: float | None,
+    notes: str | None,
+) -> Event:
+    title = f"{name} {datetime.now().strftime('%d-%m-%Y')}"
+    event = Event(
+        type=EventTypes.ACTIVITY,
+        title=title,
+        raw_text=None,
+        notes=notes,
+    )
+    session.add(event)
+    session.flush()
+
+    event.metrics.append(EventMetric(name=name, value=value))
+
+    session.commit()
+    session.refresh(event)
+    return event

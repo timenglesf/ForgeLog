@@ -5,6 +5,7 @@ from enum import Enum
 # Shared enums / helpers
 # --------------------
 class EventTypes(Enum):
+    ACTIVITY = "activity"
     GUITAR = "guitar"
     HARMONICA = "harmonica"
     NOTE = "note"
