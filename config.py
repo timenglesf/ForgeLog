@@ -1,4 +1,5 @@
 from enum import Enum
+from datetime import datetime, timezone
 
 
 # --------------------
@@ -28,3 +29,7 @@ class GuitarFocus(Enum):
 
 
 sqlite_engine_uri = "sqlite:///forgelog.sqlite"
+
+
+def get_date() -> datetime:
+    return datetime.now(timezone.utc)

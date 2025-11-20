@@ -83,6 +83,13 @@ def log_workout(
             help="Number of dips (optional).",
         ),
     ] = None,
+    planks: Annotated[
+        Optional[int],
+        typer.Option(
+            "--planks",
+            help="Number of planks (optional).",
+        ),
+    ] = None,
     pushups: Annotated[
         Optional[int],
         typer.Option(
@@ -102,6 +109,13 @@ def log_workout(
         typer.Option(
             "--rows",
             help="Number of rows (optional).",
+        ),
+    ] = None,
+    situps: Annotated[
+        Optional[int],
+        typer.Option(
+            "--situps",
+            help="Number of situps (optional).",
         ),
     ] = None,
     squats: Annotated[
@@ -127,9 +141,11 @@ def log_workout(
         event = events.log_workout(
             session,
             dips=dips,
+            planks=planks,
             pushups=pushups,
             pullups=pullups,
             rows=rows,
+            situps=situps,
             squats=squats,
             notes=notes,
         )
@@ -140,9 +156,11 @@ def log_workout(
     typer.echo(f"  distance_km={distance_km}")
     typer.echo(f"  duration_min={duration_min}")
     typer.echo(f"  dips={dips}")
+    typer.echo(f"  planks={planks}")
     typer.echo(f"  pushups={pushups}")
     typer.echo(f"  pullups={pullups}")
     typer.echo(f"  rows={rows}")
+    typer.echo(f"  situps={situps}")
     typer.echo(f"  squats={squats}")
     typer.echo(f"  notes={notes}")
 
@@ -337,7 +355,7 @@ def show_today(
     detailed: Annotated[
         bool,
         typer.Option(
-            "detailed" "-d",
+            "--detailed" "-d",
             help="Show full details/notes for each event.",
         ),
     ] = False,
@@ -345,7 +363,11 @@ def show_today(
     """
     Show all events logged today.
     """
+
     # TODO: fetch events from DB for today's date and print them nicely.
+    with Session(db.get_engine()) as session:
+        evnts = events.select_events_today(session)
+    typer.echo(evnts)
     typer.echo(f"Showing today's events (detailed={detailed})")
     typer.echo("TODO: implement DB query and rendering.")
 
