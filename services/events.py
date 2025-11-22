@@ -1,9 +1,14 @@
-from datetime import datetime
-from sqlalchemy import between, select
-from sqlalchemy.orm import Session, selectinload
+from datetime import datetime, timezone, timedelta
+from sqlalchemy import select
 from typing import List
-from config import EventTypes, GuitarFocus, get_date
+from sqlalchemy.orm import Session, selectinload
+
+from config import EventTypes, GuitarFocus, TimeRange, get_date
 from model import Event, EventMetric, EventTag
+
+###################
+##### LOGGING #####
+###################
 
 
 def log_workout(
@@ -100,19 +105,58 @@ def log_activity(
     return event
 
 
-def select_events_today(session: Session) -> list[Event]:
-    today = get_date()
-    start = datetime.combine(today, datetime.min.time())
-    end = datetime.combine(today, datetime.max.time())
+#####################
+##### SELECTING #####
+#####################
+
+
+def get_range_bounds(
+    days: int, tz: timezone = timezone.utc
+) -> tuple[datetime, datetime]:
+    """
+    Return (start, end) such that:
+    - end is end of today (23:59:59.999999)
+    - start is midnight of (today - (days - 1))
+    """
+    now = datetime.now(tz)
+    end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    start_date = (end - timedelta(days=days - 1)).date()
+    start = datetime(
+        year=start_date.year,
+        month=start_date.month,
+        day=start_date.day,
+        tzinfo=tz,
+    )
+
+    return start, end
+
+
+def select_events_between(
+    session: Session,
+    range: TimeRange,
+) -> List[Event]:
+    start, end = get_range_bounds(range)
+    print(start)
+    print(end)
     stmt = (
         select(Event)
-        .where(between(Event.timestamp, start, end))
+        .where(Event.timestamp >= start, Event.timestamp < end)
         .options(
             selectinload(Event.metrics),
             selectinload(Event.event_tags).selectinload(EventTag.tag),
         )
-        .order_by(Event.timestamp)
     )
-    result = session.execute(stmt)
-    events = list(result.scalars().all())
-    return events
+    return list(session.scalars(stmt).all())
+
+
+def select_events_today(session: Session) -> List[Event]:
+    events_today = select_events_between(session, TimeRange.TODAY)
+    return events_today
+
+
+def select_events_week(session: Session) -> List[Event]:
+    events_week = select_events_between(session, TimeRange.WEEK)
+    print(TimeRange.WEEK.value)
+    print(events_week)
+    return events_week

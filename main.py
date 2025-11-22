@@ -23,12 +23,15 @@ import typer
 from sqlalchemy.orm import Session
 import time
 
-from config import TimeRange
+from config import TimeRange, TimeRangeStr
 import config
 import db
 from model import Base
 from services import events
-
+from serialization_helpers import (
+    format_events_today_as_json,
+    format_events_week_as_json,
+)
 
 # Root Typer app
 app = typer.Typer(help="Local AI life tracker (workout, study, guitar, journaling).")
@@ -363,13 +366,11 @@ def show_today(
     """
     Show all events logged today.
     """
-
-    # TODO: fetch events from DB for today's date and print them nicely.
     with Session(db.get_engine()) as session:
-        evnts = events.select_events_today(session)
-    typer.echo(evnts)
-    typer.echo(f"Showing today's events (detailed={detailed})")
-    typer.echo("TODO: implement DB query and rendering.")
+        json_events = format_events_today_as_json(session)
+        # json_events = format_events_week_as_json(session)
+    # TODO: Create display meaningful content
+    typer.echo(json_events)
 
 
 # --------------------
@@ -379,7 +380,7 @@ def show_today(
 
 @analyze_app.command("range")
 def analyze_range(
-    range: TimeRange = typer.Argument(TimeRange.week, help="Time range to analyze."),
+    range: TimeRange = typer.Argument(TimeRangeStr.week, help="Time range to analyze."),
 ):
     """
     Analyze your data for a given time range (today, week, month).
@@ -397,7 +398,7 @@ def analyze_range(
 @blog_app.command("generate")
 def blog_generate(
     range: TimeRange = typer.Argument(
-        TimeRange.week, help="Time range for the blog post."
+        TimeRangeStr.week, help="Time range for the blog post."
     ),
     output: Optional[str] = typer.Option(
         "--output",

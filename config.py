@@ -14,10 +14,18 @@ class EventTypes(Enum):
     WORKOUT = "workout"
 
 
-class TimeRange(str, Enum):
+class TimeRange(int, Enum):
+    TODAY = 1
+    WEEK = 7
+    MONTH = 30
+    YEAR = 365
+
+
+class TimeRangeStr(str, Enum):
     today = "today"
     week = "week"
     month = "month"
+    year = "year"
 
 
 class GuitarFocus(Enum):
